@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Dark theme (default) */
+  --primary-bg: #0a0e17;
+  --secondary-bg: #0f172a;
+  --card-bg: #1e293b;
+  --accent-color: #3b82f6;
+  --accent-color-light: #60a5fa;
+  --accent-color-dark: #1d4ed8;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --border-color: #334155;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --info-color: #8b5cf6;
+  --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+.light {
+  --primary-bg: #f1f5f9;
+  --secondary-bg: #ffffff;
+  --card-bg: #ffffff;
+  --accent-color: #2563eb;
+  --accent-color-light: #3b82f6;
+  --accent-color-dark: #1d4ed8;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --border-color: #e2e8f0;
+  --success-color: #059669;
+  --warning-color: #d97706;
+  --error-color: #dc2626;
+  --info-color: #7c3aed;
+  --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+body {
+  @apply bg-[var(--primary-bg)] text-[var(--text-primary)] font-sans antialiased;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.status-success {
+  background-color: var(--success-color);
+  color: white;
+}
+.status-failed {
+  background-color: var(--error-color);
+  color: white;
+}
+.status-pending {
+  background-color: var(--warning-color);
+  color: white;
+}
