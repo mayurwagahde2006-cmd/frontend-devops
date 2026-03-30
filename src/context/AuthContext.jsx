@@ -9,22 +9,26 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api.get('/user/Info')
-      .then((res) => {
+useEffect(() => {
+  api.get('/user/Info', {
+    validateStatus: (status) => status < 400
+    .then((res) => {
+      if (res.status === 200 && res.data?.username) {
         setUser({
-        name: res.data.username,
-      });
+          name: res.data.username,
+        });
 
-      toast.success(`Welcome ${res.data.username}`);
-      })
+        toast.success(`Welcome ${res.data.username}`);
+      } else {
+        setUser(null);
+      }
+    })
     .catch(() => {
       setUser(null);
 
-      toast.error("Login failed");
     })
     .finally(() => setLoading(false));
-  }, []);
+}, []);
 
   const logout = () => {
     document.cookie =
