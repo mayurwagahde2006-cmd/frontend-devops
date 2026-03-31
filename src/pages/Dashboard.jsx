@@ -11,50 +11,59 @@ const Dashboard = () => {
     suggestions: 0,
   });
 
-useEffect(() => {
-  fetchAllData();
-}, []);
+  useEffect(() => {
+    fetchAllData();
+  }, []);
 
-const fetchAllData = async () => {
-  try {
-    // 1️⃣ Fetch imported repos (DB)
-    const importedRes = await api.get("/repos/imported");
-    setRecentRepos(importedRes.data.slice(0, 10));
+  const fetchAllData = async () => {
+    try {
+      // 1️⃣ Fetch imported repos (DB)
+      const importedRes = await api.get("/repos/imported", {
+        withCredentials: true
+      });
+      setRecentRepos(importedRes.data.slice(0, 10));
 
-    // 2️⃣ Fetch GitHub live repos
-    const githubRes = await api.get("/github/userRepos", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("github_token")}`
+      // 2️⃣ Fetch GitHub live repos
+      const githubRes = await api.get("/github/userRepos", {
+        withCredentials: true
+      });
+
+      // 3️⃣ Example: get CI status for first repo
+      let pipelineCount = 0;
+      let deploymentCount = 0;
+
+      if (importedRes.data.length > 0) {
+        const repoId = importedRes.data[0].id;
+
+        const ciRes = await api.post(`/ci-status/${repoId}`, {}, {
+          withCredentials: true
+        });
+
+        const deployRes = await api.post(`/deploy/${repoId}`, {}, {
+          withCredentials: true
+        });
+
+        if (ciRes.data) pipelineCount = 1;
+        if (deployRes.data) deploymentCount = 1;
       }
-    });
 
-    // 3️⃣ Example: get CI status for first repo
-    let pipelineCount = 0;
-    let deploymentCount = 0;
+      // 4️⃣ Update stats properly
+      setStats({
+        repos: importedRes.data.length,
+        pipelines: pipelineCount,
+        deployments: deploymentCount,
+        suggestions: 5
+      });
 
-    if (importedRes.data.length > 0) {
-      const repoId = importedRes.data[0].id;
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
 
-      const ciRes = await api.post(`/ci-status/${repoId}`);
-      const deployRes = await api.post(`/deploy/${repoId}`);
-
-      if (ciRes.data) pipelineCount = 1;
-      if (deployRes.data) deploymentCount = 1;
+      // 🔥 redirect if not logged in
+      if (error.response?.status === 401) {
+        window.location.href = "/";
+      }
     }
-
-    // 4️⃣ Update stats properly
-    setStats({
-      repos: importedRes.data.length,
-      pipelines: pipelineCount,
-      deployments: deploymentCount,
-      suggestions: 5 // until AI endpoint created
-    });
-
-  } catch (error) {
-    console.error("Error fetching dashboard data:", error);
-  }
-};
-
+  };
 
   return (
     <>
@@ -102,7 +111,7 @@ const fetchAllData = async () => {
         ))}
       </div>
 
-      {/* Pipeline Status (mock) */}
+      {/* Pipeline Status */}
       <div className="section-header mt-10 mb-4">
         <h2 className="text-2xl font-semibold">Pipeline Status</h2>
       </div>
