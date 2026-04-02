@@ -19,6 +19,7 @@ const Pipelines = () => {
   const fetchCIStatus = async (repoId) => {
     setLoading(true);
     try {
+      console.log(repoId)
       const res = await api.get(`/ci-status/${repoId}`);
 
       // store full response

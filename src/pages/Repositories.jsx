@@ -56,10 +56,12 @@ const Repositories = () => {
       });
 
       console.log("IMPORT SUCCESS");
+      toast.success("Import Successfully")
 
       const [imported, available] = await Promise.all([
         api.get('/repos/imported'),
         api.get('/github/userRepos')
+        
       ]);
 
       setImportedRepos(imported.data || []);
@@ -67,6 +69,7 @@ const Repositories = () => {
       // remove imported repo from available list
       setAvailableRepos(
         (available.data || []).filter(r => r.id !== repo.id)
+        
       );
 
     } catch (err) {

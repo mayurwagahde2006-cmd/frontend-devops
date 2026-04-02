@@ -115,7 +115,7 @@ const handleAddMember = async () => {
 
   if (isSubmitting) return;
   setIsSubmitting(true);
-  toast.error("Add Member");
+  toast.success("Add Member");
 
   try {
     await addMemberAPI({
@@ -166,7 +166,8 @@ const handleAddTask = async () => {
     });
 
     // SUCCESS MESSAGE
-    toast.error("Task added successfully");
+    toast.success("Task added successfully");
+    console.log("add");
 
     //  RESET INPUTS AFTER SUCCESS
     setTask({

@@ -3,6 +3,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 import AIPanel from './AIPanel';
+import toast from "react-hot-toast";
+
 import { 
   FaTachometerAlt, 
   FaTasks, 
@@ -100,6 +102,7 @@ const Layout = () => {
                 <button
                   onClick={logout}
                   className="w-full text-left px-4 py-3 text-red-500 hover:bg-[var(--secondary-bg)] transition"
+                 
                 >
                   Logout
                 </button>
@@ -152,7 +155,7 @@ const Layout = () => {
       {/* Footer */}
       <footer className="mt-16 py-8 border-t border-[var(--border-color)] text-center text-[var(--text-secondary)] text-sm">
         <div className="container mx-auto px-4">
-          OPERA &copy; 2023 - Intelligent CI/CD Platform for Developers
+          OPERA &copy; 2026 - Intelligent CI/CD Platform for Developers
         </div>
       </footer>
     </div>

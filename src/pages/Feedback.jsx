@@ -35,7 +35,7 @@ const Feedback = () => {
         "6zrZ8-Pl5r_z7k9i6"
       );
 
-      toast.error(" Feedback sent successfully!");
+      toast.success(" Feedback sent successfully!");
       setForm({ name: "", email: "", message: "" });
 
     } catch (error) {
