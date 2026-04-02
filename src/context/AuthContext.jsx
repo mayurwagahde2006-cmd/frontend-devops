@@ -10,20 +10,19 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
 useEffect(() => {
-  api.get('/user/Info')
+  api.get('/user/Info', {
+    withCredentials: true   // 🔥 THIS IS THE FIX
+  })
     .then((res) => {
       setUser({
         name: res.data.username,
       });
-
-      toast.success(`Welcome ${res.data.username}`);
     })
-    .catch(() => {
+    .catch((err) => {
+      console.log("Auth error:", err);
       setUser(null);
     })
-    .finally(() => {
-      setLoading(false);
-    });
+    .finally(() => setLoading(false));
 }, []);
 
   const logout = () => {
