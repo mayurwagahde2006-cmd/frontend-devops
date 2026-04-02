@@ -9,25 +9,30 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  api.get('/user/Info', {
-    withCredentials: true   // 🔥 THIS IS THE FIX
-  })
-    .then((res) => {
-      setUser({
-        name: res.data.username,
-      });
+  useEffect(() => {
+    api.get('/user/Info', {
+      withCredentials: true
     })
-    .catch((err) => {
-      console.log("Auth error:", err);
-      setUser(null);
-    })
-    .finally(() => setLoading(false));
-}, []);
+      .then((res) => {
+        setUser({
+          name: res.data.username,
+        });
+      })
+      .catch((err) => {
+        console.log("Auth error:", err);
+
+        // ✅ handle unauthorized properly (no redirect loop / CORS issue)
+        if (err.response?.status === 401) {
+          setUser(null);
+        }
+
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const logout = () => {
     document.cookie =
-      'JWT_TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      'JWT_TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=None; Secure;';
     setUser(null);
     window.location.href = '/login';
   };
