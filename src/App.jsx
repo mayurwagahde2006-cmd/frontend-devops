@@ -9,6 +9,7 @@ import Deployments from './pages/Deployments';
 import Monitoring from './pages/Monitoring';
 import Login from './pages/Login';
 import PrivateRoute from './components/PrivateRoute';
+import Planning from './pages/Planning';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
+              <Route path="/planning" element={<Planning />} />
               <Route path="repositories" element={<Repositories />} />
               <Route path="pipelines" element={<Pipelines />} />
               <Route path="deployments" element={<Deployments />} />

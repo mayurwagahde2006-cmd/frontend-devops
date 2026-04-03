@@ -7,18 +7,22 @@ const Pipelines = () => {
   const [ciStatus, setCiStatus] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // 🔹 Load repos
   useEffect(() => {
-    // Fetch all imported repos for the logged-in user
     api.get('/repos/imported')
       .then(res => setImportedRepos(res.data))
       .catch(err => console.error('Failed to fetch imported repos:', err));
   }, []);
 
+  // 🔹 Fetch CI Status
   const fetchCIStatus = async (repoId) => {
     setLoading(true);
     try {
       const res = await api.get(`/ci-status/${repoId}`);
-      setCiStatus(res.data.status); // Expecting { "status": "success" } etc.
+
+      // ✅ store full response
+      setCiStatus(res.data);
+
     } catch (err) {
       alert('Failed to fetch CI status');
       console.error(err);
@@ -29,8 +33,13 @@ const Pipelines = () => {
 
   const handleSelectRepo = (repo) => {
     setSelectedRepo(repo);
-    fetchCIStatus(repo.id);
+
+    // ✅ FIX: use githubRepoId
+    fetchCIStatus(repo.githubRepoId);
   };
+
+  // 🔥 Extract status safely
+  const status = ciStatus?.status?.toUpperCase();
 
   return (
     <>
@@ -39,11 +48,15 @@ const Pipelines = () => {
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Repository List */}
+
+        {/* 🔹 Repository List */}
         <div className="bg-[var(--card-bg)] rounded-xl p-5 shadow-custom">
           <h2 className="text-xl font-semibold mb-4">Imported Repositories</h2>
+
           {importedRepos.length === 0 ? (
-            <p className="text-[var(--text-secondary)]">No repositories imported yet.</p>
+            <p className="text-[var(--text-secondary)]">
+              No repositories imported yet.
+            </p>
           ) : (
             <ul className="space-y-2">
               {importedRepos.map(repo => (
@@ -64,39 +77,53 @@ const Pipelines = () => {
           )}
         </div>
 
-        {/* CI Status Display */}
+        {/* 🔹 CI Status Display */}
         <div className="md:col-span-2 bg-[var(--card-bg)] rounded-xl p-5 shadow-custom">
+
           {selectedRepo ? (
             <>
-              <h2 className="text-xl font-semibold mb-4">{selectedRepo.repoName} – CI Status</h2>
+              <h2 className="text-xl font-semibold mb-4">
+                {selectedRepo.repoName} – CI Status
+              </h2>
+
               {loading ? (
                 <div className="text-center py-10">Loading...</div>
               ) : (
                 <div>
+
+                  {/* 🔥 STATUS BADGE */}
                   <div
                     className={`inline-block px-4 py-2 rounded-full text-sm font-medium ${
-                      ciStatus === 'success' || ciStatus === 'success'
-                        ? 'bg-[var(--success-color)] text-white'
-                        : ciStatus === 'failure' || ciStatus === 'failed'
-                        ? 'bg-[var(--error-color)] text-white'
-                        : ciStatus === 'in_progress' || ciStatus === 'queued'
-                        ? 'bg-[var(--warning-color)] text-white'
+                      status === 'SUCCESS'
+                        ? 'bg-green-500 text-white'
+                        : status === 'FAILED' || status === 'FAILURE'
+                        ? 'bg-red-500 text-white'
+                        : status === 'IN_PROGRESS' || status === 'QUEUED'
+                        ? 'bg-yellow-500 text-white'
                         : 'bg-[var(--border-color)] text-[var(--text-secondary)]'
                     }`}
                   >
-                    {ciStatus || 'No runs yet'}
+                    {status || 'No runs yet'}
                   </div>
-                  <p className="mt-4 text-[var(--text-secondary)]">
-                    Last checked: just now
-                  </p>
+
+                  {/* 🔥 EXTRA INFO (from backend DTO) */}
+                  {ciStatus && (
+                    <div className="mt-4 text-sm text-[var(--text-secondary)] space-y-1">
+                      <p>Workflow: {ciStatus.workflowName || 'N/A'}</p>
+                      <p>Date: {ciStatus.date || 'N/A'}</p>
+                    </div>
+                  )}
+
                 </div>
               )}
+
             </>
           ) : (
             <p className="text-[var(--text-secondary)] text-center py-10">
               Select a repository to view its CI status
             </p>
           )}
+
         </div>
       </div>
     </>

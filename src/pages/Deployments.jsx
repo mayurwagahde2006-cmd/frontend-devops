@@ -10,15 +10,20 @@ const Deployments = () => {
     runtimeVersion: '17',
     branchName: 'main',
     dockerEnabled: false,
-    cdEnabled: false,
+    cdEnabled: true, // ✅ always true
     deployHookUrl: '',
   });
   const [deploying, setDeploying] = useState(false);
 
   useEffect(() => {
     api.get('/repos/imported')
-      .then(res => setImportedRepos(res.data))
-      .catch(err => console.error('Failed to fetch imported repos:', err));
+      .then(res => {
+        console.log("Imported repos:", res.data);
+        setImportedRepos(res.data);
+      })
+      .catch(err => {
+        console.error('Failed to fetch imported repos:', err.response || err.message);
+      });
   }, []);
 
   const handleDeploy = async () => {
@@ -26,13 +31,35 @@ const Deployments = () => {
       alert('Please select a repository');
       return;
     }
+
+    const repoId = selectedRepo.githubRepoId || selectedRepo.id;
+
+    if (!repoId) {
+      alert('Repository ID not found!');
+      return;
+    }
+
+    // ✅ ensure deployHookUrl is not empty
+    if (!config.deployHookUrl) {
+      alert("Build Hook URL is required");
+      return;
+    }
+
+    const payload = {
+      ...config,
+      cdEnabled: true, // ✅ force true always
+    };
+
+    console.log("Payload:", payload);
+
     setDeploying(true);
     try {
-      await api.post(`/deploy/${selectedRepo.id}`, config);
+      const res = await api.post(`/deploy/${repoId}`, payload);
+      console.log("Deploy response:", res.data);
       alert('Deployment triggered successfully!');
     } catch (err) {
+      console.error("Deploy error:", err.response || err.message);
       alert('Deployment failed. Check console for details.');
-      console.error(err);
     } finally {
       setDeploying(false);
     }
@@ -76,6 +103,7 @@ const Deployments = () => {
             <>
               <h2 className="text-xl font-semibold mb-4">Deploy {selectedRepo.repoName}</h2>
               <div className="space-y-4">
+                
                 {/* Project Type */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Project Type</label>
@@ -130,7 +158,7 @@ const Deployments = () => {
                   />
                 </div>
 
-                {/* Checkboxes */}
+                {/* Docker Checkbox */}
                 <div className="flex items-center gap-6">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -141,32 +169,21 @@ const Deployments = () => {
                     />
                     Enable Docker
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={config.cdEnabled}
-                      onChange={e => setConfig({...config, cdEnabled: e.target.checked})}
-                      className="rounded border-[var(--border-color)] text-[var(--accent-color)] focus:ring-[var(--accent-color)]"
-                    />
-                    Enable CD (build hook)
-                  </label>
                 </div>
 
-                {/* Deploy Hook URL (conditional) */}
-                {config.cdEnabled && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Build Hook URL</label>
-                    <input
-                      type="url"
-                      value={config.deployHookUrl}
-                      onChange={e => setConfig({...config, deployHookUrl: e.target.value})}
-                      placeholder=""
-                      className="w-full p-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"
-                    />
-                  </div>
-                )}
+                {/* ✅ Always Visible Build Hook URL */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Build Hook URL</label>
+                  <input
+                    type="url"
+                    value={config.deployHookUrl}
+                    onChange={e => setConfig({...config, deployHookUrl: e.target.value})}
+                    placeholder=""
+                    className="w-full p-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"
+                  />
+                </div>
 
-                {/* Submit Button */}
+                {/* Submit */}
                 <button
                   onClick={handleDeploy}
                   disabled={deploying}
@@ -174,6 +191,7 @@ const Deployments = () => {
                 >
                   {deploying ? 'Deploying...' : 'Deploy Now'}
                 </button>
+
               </div>
             </>
           ) : (

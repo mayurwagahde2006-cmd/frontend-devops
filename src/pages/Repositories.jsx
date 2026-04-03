@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
-import RepoCard from '../components/RepoCard';
+import RepoCard from '../components/RepoCard'; // ✅ FIXED PATH
 
 const Repositories = () => {
   const [activeTab, setActiveTab] = useState('imported');
@@ -11,28 +11,67 @@ const Repositories = () => {
   useEffect(() => {
     if (activeTab === 'imported') {
       api.get('/repos/imported')
-        .then(res => setImportedRepos(res.data))
-        .catch(console.error);
+        .then(res => setImportedRepos(res.data || [])) // ✅ safe
+        .catch(err => {
+          console.error("Imported fetch error:", err);
+        });
     } else {
       setLoading(true);
       api.get('/github/userRepos')
-        .then(res => setAvailableRepos(res.data))
-        .catch(console.error)
+        .then(res => {
+          console.log("Available repos:", res.data);
+          setAvailableRepos(res.data || []); // ✅ safe
+        })
+        .catch(err => {
+          console.error("GitHub repos error:", err);
+        })
         .finally(() => setLoading(false));
     }
   }, [activeTab]);
 
   const handleImport = async (repo) => {
+    console.log("CLICKED IMPORT:", repo);
+
+    if (!repo || !repo.id) {
+      alert("Invalid repo data");
+      return;
+    }
+
+    if (loading) return;
+    setLoading(true);
+
     try {
-      await api.post('/repos/import', repo);
+      await api.post('/repos/import', {
+        id: String(repo.id),
+        name: repo.name || "",
+        description: repo.description || "",
+
+        html_url: repo.html_url,                    // ✅ FIXED
+        clone_url: repo.clone_url,                  // ✅ ADDED
+        stargazers_count: String(repo.stargazers_count || 0), // ✅ ADDED
+
+        language: repo.language || "Unknown"       // ⚠️ backend typo
+      });
+
+      console.log("IMPORT SUCCESS");
+
       const [imported, available] = await Promise.all([
         api.get('/repos/imported'),
         api.get('/github/userRepos')
       ]);
-      setImportedRepos(imported.data);
-      setAvailableRepos(available.data);
+
+      setImportedRepos(imported.data || []);
+
+      // remove imported repo from available list
+      setAvailableRepos(
+        (available.data || []).filter(r => r.id !== repo.id)
+      );
+
     } catch (err) {
-      alert('Failed to import repository');
+      console.error("IMPORT ERROR:", err.response || err.message);
+      alert(err.response?.data?.message || 'Failed to import repository');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -42,36 +81,57 @@ const Repositories = () => {
         <h1 className="page-title text-3xl font-bold bg-gradient-to-r from-[var(--accent-color)] to-[var(--accent-color-light)] bg-clip-text text-transparent">
           Repository Management
         </h1>
-        <button className="bg-[var(--accent-color)] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[var(--accent-color-dark)] transition-colors flex items-center gap-2">
-          <i className="fab fa-github"></i> Connect New Repo
-        </button>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-4 border-b border-[var(--border-color)] mb-6">
         <button
-          className={`pb-2 px-1 font-medium transition-colors ${activeTab === 'imported' ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]' : 'text-[var(--text-secondary)]'}`}
+          className={`pb-2 px-1 font-medium transition-colors ${
+            activeTab === 'imported'
+              ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]'
+              : 'text-[var(--text-secondary)]'
+          }`}
           onClick={() => setActiveTab('imported')}
         >
           Imported
         </button>
+
         <button
-          className={`pb-2 px-1 font-medium transition-colors ${activeTab === 'available' ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]' : 'text-[var(--text-secondary)]'}`}
+          className={`pb-2 px-1 font-medium transition-colors ${
+            activeTab === 'available'
+              ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]'
+              : 'text-[var(--text-secondary)]'
+          }`}
           onClick={() => setActiveTab('available')}
         >
           Available on GitHub
         </button>
       </div>
 
-      {loading && <div className="text-center py-10">Loading...</div>}
+      {loading && (
+        <div className="text-center py-10">Loading...</div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {activeTab === 'imported' && importedRepos.map(repo => (
-          <RepoCard key={repo.id} repo={repo} isImported />
-        ))}
-        {activeTab === 'available' && availableRepos.map(repo => (
-          <RepoCard key={repo.id} repo={repo} onImport={handleImport} />
-        ))}
+        {activeTab === 'imported' &&
+          Array.isArray(importedRepos) &&
+          importedRepos.map(repo => (
+            <RepoCard
+              key={repo.id}
+              repo={repo}
+              isImported
+            />
+          ))}
+
+        {activeTab === 'available' &&
+          Array.isArray(availableRepos) &&
+          availableRepos.map(repo => (
+            <RepoCard
+              key={repo.id}
+              repo={repo}
+              onImport={handleImport}
+            />
+          ))}
       </div>
     </>
   );

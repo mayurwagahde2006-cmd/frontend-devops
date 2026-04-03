@@ -15,6 +15,7 @@ const Dashboard = () => {
     fetchAllData();
   }, []);
 
+<<<<<<< Updated upstream
   const fetchAllData = async () => {
     try {
       // 1️⃣ Fetch imported repos (DB)
@@ -45,8 +46,21 @@ const Dashboard = () => {
 
         if (ciRes.data) pipelineCount = 1;
         if (deployRes.data) deploymentCount = 1;
+=======
+const fetchAllData = async () => {
+  try {
+    //  Fetch imported repos (DB)
+    const importedRes = await api.get("/repos/imported");
+    setRecentRepos(importedRes.data.slice(0, 10));
+
+    //  Fetch GitHub live repos
+    const githubRes = await api.get("/github/userRepos", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("github_token")}`
+>>>>>>> Stashed changes
       }
 
+<<<<<<< Updated upstream
       // 4️⃣ Update stats properly
       setStats({
         repos: importedRes.data.length,
@@ -54,6 +68,11 @@ const Dashboard = () => {
         deployments: deploymentCount,
         suggestions: 5
       });
+=======
+    //  Example: get CI status for first repo
+    let pipelineCount = 0;
+    let deploymentCount = 0;
+>>>>>>> Stashed changes
 
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -63,7 +82,24 @@ const Dashboard = () => {
         window.location.href = "/";
       }
     }
+<<<<<<< Updated upstream
   };
+=======
+
+    //  Update stats properly
+    setStats({
+      repos: importedRes.data.length,
+      pipelines: pipelineCount,
+      deployments: deploymentCount,
+      suggestions: 5 // until AI endpoint created
+    });
+
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error);
+  }
+};
+
+>>>>>>> Stashed changes
 
   return (
     <>
@@ -71,12 +107,10 @@ const Dashboard = () => {
         <h1 className="page-title text-3xl font-bold bg-gradient-to-r from-[var(--accent-color)] to-[var(--accent-color-light)] bg-clip-text text-transparent">
           Dashboard
         </h1>
-        <button className="bg-[var(--accent-color)] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[var(--accent-color-dark)] transition-colors flex items-center gap-2">
-          <i className="fab fa-github"></i> Import Repository
-        </button>
+        
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {[
           { icon: 'github', label: 'Active Repositories', value: stats.repos },
@@ -95,14 +129,14 @@ const Dashboard = () => {
             <p className="text-[var(--text-secondary)] text-sm">Connected GitHub repositories</p>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Recent Repositories */}
       <div className="section-header flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold">Recent Repositories</h2>
-        <button className="bg-[var(--card-bg)] border border-[var(--border-color)] text-[var(--text-primary)] px-4 py-2 rounded-lg hover:bg-[var(--border-color)] transition-colors flex items-center gap-2">
+        {/* <button className="bg-[var(--card-bg)] border border-[var(--border-color)] text-[var(--text-primary)] px-4 py-2 rounded-lg hover:bg-[var(--border-color)] transition-colors flex items-center gap-2">
           <i className="fas fa-plus"></i> Add New
-        </button>
+        </button> */}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -111,7 +145,11 @@ const Dashboard = () => {
         ))}
       </div>
 
+<<<<<<< Updated upstream
       {/* Pipeline Status */}
+=======
+      {/* Pipeline Status (mock)
+>>>>>>> Stashed changes
       <div className="section-header mt-10 mb-4">
         <h2 className="text-2xl font-semibold">Pipeline Status</h2>
       </div>
@@ -143,7 +181,7 @@ const Dashboard = () => {
             <div className="py-1"><span className="text-[var(--text-secondary)]">14:33:20</span> <span className="text-[var(--info-color)]">[INFO]</span> Building Docker image...</div>
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   );
 };
