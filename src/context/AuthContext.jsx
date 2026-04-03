@@ -8,19 +8,22 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+  const isLoggedIn = document.cookie.includes("JWT_TOKEN");
+
+  if (!isLoggedIn) {
+    setLoading(false);
+    return;
+  }
+
   api.get('/user/Info', {
-    withCredentials: true   // 🔥 THIS IS THE FIX
+    withCredentials: true
   })
     .then((res) => {
-      setUser({
-        name: res.data.username,
-      });
+      setUser({ name: res.data.username });
     })
-    .catch((err) => {
-      console.log("Auth error:", err);
-      setUser(null);
-    })
+    .catch(() => setUser(null))
     .finally(() => setLoading(false));
+
 }, []);
 
   const logout = () => {
