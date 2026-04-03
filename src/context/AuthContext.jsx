@@ -8,28 +8,31 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  const isLoggedIn = document.cookie.includes("JWT_TOKEN");
-
-  if (!isLoggedIn) {
-    setLoading(false);
-    return;
-  }
-
-  api.get('/user/Info', {
-    withCredentials: true
-  })
-    .then((res) => {
-      setUser({ name: res.data.username });
+    // 🔥 Always call backend (cookie will be sent automatically)
+    api.get('/user/Info', {
+      withCredentials: true
     })
-    .catch(() => setUser(null))
-    .finally(() => setLoading(false));
-
-}, []);
+      .then((res) => {
+        setUser({ name: res.data.username });
+      })
+      .catch(() => {
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   const logout = () => {
+    // Optional: call backend logout if you have one
+
+    // Clear cookie (browser side fallback)
     document.cookie =
       'JWT_TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
     setUser(null);
+
+    // 🔥 redirect to login
     window.location.href = '/login';
   };
 
