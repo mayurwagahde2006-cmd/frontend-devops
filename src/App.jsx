@@ -10,6 +10,8 @@ import Deployments from './pages/Deployments';
 import Monitoring from './pages/Monitoring';
 import Login from './pages/Login';
 import PrivateRoute from './components/PrivateRoute';
+import Planning from './pages/Planning';
+import Feedback from './pages/Feedback';
 
 function App() {
   return (
