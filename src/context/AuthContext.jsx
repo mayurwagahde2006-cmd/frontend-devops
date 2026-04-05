@@ -1,7 +1,5 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import api from '../api';
-import { FaGithub } from "react-icons/fa";
-import toast from "react-hot-toast";
 
 const AuthContext = createContext();
 
@@ -10,30 +8,31 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 🔥 Always call backend (cookie will be sent automatically)
     api.get('/user/Info', {
       withCredentials: true
     })
       .then((res) => {
-        setUser({
-          name: res.data.username,
-        });
+        setUser({ name: res.data.username });
       })
-      .catch((err) => {
-        console.log("Auth error:", err);
-
-        // ✅ handle unauthorized properly (no redirect loop / CORS issue)
-        if (err.response?.status === 401) {
-          setUser(null);
-        }
-
+      .catch(() => {
+        setUser(null);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const logout = () => {
+    // Optional: call backend logout if you have one
+
+    // Clear cookie (browser side fallback)
     document.cookie =
-      'JWT_TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=None; Secure;';
+      'JWT_TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
     setUser(null);
+
+    // 🔥 redirect to login
     window.location.href = '/login';
   };
 

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-const RepoCard = ({ repo, isImported, onImport }) => {
+const RepoCard = ({ repo, isImported, onImport, onDelete }) => {
   const navigate = useNavigate();
 
   const statusClass = repo.status === 'success' ? 'status-success' : repo.status === 'failed' ? 'status-failed' : 'status-pending';
@@ -26,11 +26,11 @@ const RepoCard = ({ repo, isImported, onImport }) => {
           <i className="far fa-clock mr-1"></i> Last deploy: {repo.lastDeploy || 'N/A'}
         </span>
         {isImported ? (
-          <button
-            onClick={() => navigate(`/pipelines?repo=${repo.id}`)}
-            className="bg-[var(--accent-color)] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[var(--accent-color-dark)] transition-colors"
+         <button
+           onClick={() => onDelete(repo.id)}
+           className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
           >
-            <i className="fas fa-eye mr-1"></i> View CI
+          <i className="fas fa-trash mr-1"></i> Delete
           </button>
         ) : (
           <button

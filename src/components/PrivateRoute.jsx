@@ -8,7 +8,8 @@ const PrivateRoute = ({ children }) => {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  return user ? children : <Navigate to="/login" />;
+  return user ? children : <Navigate to="/dashboard" />;
+  // return children;
 };
 
 export default PrivateRoute;

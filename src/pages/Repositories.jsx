@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
-import RepoCard from '../components/RepoCard'; 
+import { deleteRepo, deleteAllRepos } from "../services/dashboardService";
+import RepoCard from '../components/Repocard'; 
 import toast from "react-hot-toast";
-
 
 const Repositories = () => {
   const [activeTab, setActiveTab] = useState('imported');
@@ -61,15 +61,12 @@ const Repositories = () => {
       const [imported, available] = await Promise.all([
         api.get('/repos/imported'),
         api.get('/github/userRepos')
-        
       ]);
 
       setImportedRepos(imported.data || []);
 
-      // remove imported repo from available list
       setAvailableRepos(
         (available.data || []).filter(r => r.id !== repo.id)
-        
       );
 
     } catch (err) {
@@ -80,12 +77,58 @@ const Repositories = () => {
     }
   };
 
+  //  DELETE SINGLE
+  const handleDelete = async (repoId) => {
+   const confirmDelete = window.confirm("Are you sure you want to delete this repository?");
+   if (!confirmDelete) return;
+
+   try {
+     await deleteRepo(repoId);
+
+     setImportedRepos(prev => prev.filter(r => r.id !== repoId));
+
+     toast.success("Repository deleted");
+
+    } catch (err) {
+     console.error("Delete failed:", err);
+     toast.error("Delete failed");
+    }
+  };
+
+  //  DELETE ALL
+  const handleDeleteAll = async () => {
+   const confirmDelete = window.confirm("Are you sure you want to delete ALL repositories?");
+   if (!confirmDelete) return;
+
+   try {
+     await deleteAllRepos();
+
+     setImportedRepos([]);
+
+     toast.success("All repositories deleted");
+
+    } catch (err) {
+     console.error("Delete all failed:", err);
+     toast.error("Delete all failed");
+    }
+  };
+
   return (
     <>
       <div className="page-header flex justify-between items-center mb-8">
         <h1 className="page-title text-3xl font-bold bg-gradient-to-r from-[var(--accent-color)] to-[var(--accent-color-light)] bg-clip-text text-transparent">
           Repository Management
         </h1>
+
+        {/*  DELETE ALL BUTTON */}
+        {activeTab === 'imported' && (
+          <button
+            onClick={handleDeleteAll}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+          >
+            Delete All
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -125,6 +168,7 @@ const Repositories = () => {
               key={repo.id}
               repo={repo}
               isImported
+              onDelete={handleDelete}   //  PASS DELETE
             />
           ))}
 
