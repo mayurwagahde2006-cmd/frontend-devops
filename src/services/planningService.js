@@ -6,8 +6,10 @@ export const getProjects = () =>
 export const createProject = (data) =>
   planningApi.post("/api/planning/project", data);
 
-export const addMember = (data) =>
-  planningApi.post("/api/planning/member", data);
+// ✅ UPDATED
+export const addMember = (projectId, data) =>
+  planningApi.post(`/api/planning/project/${projectId}/member`, data);
 
-export const addTask = (data) =>
-  planningApi.post("/api/planning/task", data);
+// ✅ UPDATED
+export const addTask = (projectId, data) =>
+  planningApi.post(`/api/planning/project/${projectId}/task`, data);
