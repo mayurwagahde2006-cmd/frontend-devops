@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import { deleteRepo, deleteAllRepos } from "../services/dashboardService";
-import RepoCard from '../components/Repocard'; 
+import RepoCard from '../components/RepoCard.jsx'; 
 import toast from "react-hot-toast";
 
 const Repositories = () => {
