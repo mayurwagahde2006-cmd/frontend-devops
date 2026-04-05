@@ -1,7 +1,7 @@
 import { FaGithub } from "react-icons/fa";
 const Login = () => {
   const handleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/oauth2/authorization/github`;
+    window.location.href = `https://dev-ops-assistant-1.onrender.com/oauth2/authorization/github`;
   };
 
   return (
