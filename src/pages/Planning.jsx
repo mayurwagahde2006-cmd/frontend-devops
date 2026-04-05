@@ -3,7 +3,6 @@ import Gantt from "frappe-gantt";
 import "frappe-gantt/dist/frappe-gantt.css";
 import toast from "react-hot-toast";
 
-
 import {
   getProjects,
   createProject as createProjectAPI,
@@ -27,6 +26,7 @@ const Planning = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // LOAD PROJECTS
   const refresh = async () => {
@@ -42,12 +42,12 @@ const Planning = () => {
     refresh();
   }, []);
 
-  //  SELECT PROJECT
+  // SELECT PROJECT
   const loadProject = (project) => {
     setSelectedProject(project);
   };
 
-  //  GANTT
+  // GANTT
   useEffect(() => {
     if (!selectedProject) return;
 
@@ -67,10 +67,9 @@ const Planning = () => {
     if (tasks.length > 0) {
       new Gantt("#gantt", tasks);
     }
-
   }, [selectedProject]);
 
-  //  CREATE PROJECT (FIXED)
+  // CREATE PROJECT
   const handleCreateProject = async () => {
     try {
       if (!projectName.trim()) {
@@ -88,7 +87,7 @@ const Planning = () => {
     }
   };
 
-  //  DELETE PROJECT
+  // DELETE PROJECT
   const deleteProject = async (id) => {
     try {
       if (!window.confirm("Delete project?")) return;
@@ -102,102 +101,95 @@ const Planning = () => {
     }
   };
 
-const [isSubmitting, setIsSubmitting] = useState(false);
+  // ✅ ADD MEMBER (FIXED)
+  const handleAddMember = async () => {
+    console.log("handleAddMember called!!");
 
-const handleAddMember = async () => {
-  console.log("handleAddMember called!!");
+    const name = member.name.trim();
+    const role = member.role.trim();
 
-  const name = member.name.trim();
-  const role = member.role.trim();
+    if (!name || !role) {
+      toast.error("Please enter member name and role");
+      return;
+    }
 
-  //  VALIDATION
-  if (!name || !role) {
-    toast.error("Please enter member name and role");
-    return; // NOTHING should reset here
-  }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    toast.success("Add Member");
 
-  if (isSubmitting) return;
-  setIsSubmitting(true);
-  toast.success("Add Member");
+    try {
+      // ✅ FIXED HERE
+      await addMemberAPI(selectedProject.id, {
+        name,
+        role,
+      });
 
-  try {
-    await addMemberAPI({
-      name,
-      role,
-      projectId: selectedProject.id,
-    });
+      setMember({ name: "", role: "" });
 
-    //  ONLY reset AFTER SUCCESS
-    setMember({ name: "", role: "" });
+      const res = await getProjects();
+      setProjects(res.data);
 
-    const res = await getProjects();
-    setProjects(res.data);
+      const updated = res.data.find(p => p.id === selectedProject.id);
+      setSelectedProject(updated);
 
-    // 🔥 update selected project with fresh data
-    const updated = res.data.find(p => p.id === selectedProject.id);
-    setSelectedProject(updated);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add member");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to add member");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  // ✅ ADD TASK (FIXED)
+  const handleAddTask = async () => {
+    if (!selectedProject) return;
 
-const handleAddTask = async () => {
-  if (!selectedProject) return;
+    if (!task.title.trim()) {
+      toast.error("Enter task title");
+      return;
+    }
 
-  //  VALIDATION FIRST
-  if (!task.title.trim()) {
-    toast.error("Enter task title");
-    return;
-  }
+    if (!task.startDate || !task.endDate) {
+      toast.error("Select start and end date");
+      return;
+    }
 
-  if (!task.startDate || !task.endDate) {
-    toast.error("Select start and end date");
-    return;
-  }
+    if (!task.memberId) {
+      toast.error("Select a member");
+      return;
+    }
 
-  if (!task.memberId) {
-    toast.error("Select a member");
-    return;
-  }
+    try {
+      // ✅ FIXED HERE
+      await addTaskAPI(selectedProject.id, {
+        title: task.title.trim(),
+        startDate: task.startDate,
+        endDate: task.endDate,
+        memberId: Number(task.memberId),
+      });
 
-  try {
-    await addTaskAPI({
-      title: task.title.trim(),
-      startDate: task.startDate,
-      endDate: task.endDate,
-      memberId: Number(task.memberId),
-      projectId: selectedProject.id,
-    });
+      toast.success("Task added successfully");
 
-    // SUCCESS MESSAGE
-    toast.success("Task added successfully");
-    console.log("add");
+      setTask({
+        title: "",
+        startDate: "",
+        endDate: "",
+        memberId: "",
+      });
 
-    //  RESET INPUTS AFTER SUCCESS
-    setTask({
-      title: "",
-      startDate: "",
-      endDate: "",
-      memberId: "",
-    });
+      const res = await getProjects();
+      setProjects(res.data);
 
-    const res = await getProjects();
-    setProjects(res.data);
+      const updated = res.data.find(p => p.id === selectedProject.id);
+      setSelectedProject(updated);
 
-    const updated = res.data.find(p => p.id === selectedProject.id);
-    setSelectedProject(updated);
+    } catch (err) {
+      console.error("Task error:", err);
+      toast.error("Failed to add task");
+    }
+  };
 
-  } catch (err) {
-    console.error("Task error:", err);
-    toast.error("Failed to add task");
-  }
-};
-
-  //  STATS
+  // STATS
   const totalTasks = selectedProject?.tasks?.length || 0;
   const totalMembers = selectedProject?.members?.length || 0;
   const completed =
@@ -218,7 +210,6 @@ const handleAddTask = async () => {
 
           <h2 className="font-semibold mb-4">Projects</h2>
 
-          {/* ADD PROJECT */}
           <div className="flex gap-2 mb-4">
             <input
               placeholder="New Project"
@@ -235,7 +226,6 @@ const handleAddTask = async () => {
             </button>
           </div>
 
-          {/* PROJECT LIST */}
           {projects.map((p) => (
             <div key={p.id} className="flex items-center justify-between mb-2">
               <button
