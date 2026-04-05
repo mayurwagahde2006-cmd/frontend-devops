@@ -130,6 +130,7 @@ const Planning = () => {
       setProjects(res.data);
 
       const updated = res.data.find(p => p.id === selectedProject.id);
+      console.log("Updated project after adding member:", updated);
       setSelectedProject(updated);
 
     } catch (err) {
