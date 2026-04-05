@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const planningApi = axios.create({
-  baseURL: "http://localhost:5115/api",
+  baseURL: "https://dev-ops-assistant-1.onrender.com/api",
 });
 
 export default planningApi;
