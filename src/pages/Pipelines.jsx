@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from "react-hot-toast";
 import api from '../api';
 
 const Pipelines = () => {
@@ -7,24 +8,25 @@ const Pipelines = () => {
   const [ciStatus, setCiStatus] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Load repos
+  //  Load repos
   useEffect(() => {
     api.get('/repos/imported')
       .then(res => setImportedRepos(res.data))
       .catch(err => console.error('Failed to fetch imported repos:', err));
   }, []);
 
-  // 🔹 Fetch CI Status
+  //  Fetch CI Status
   const fetchCIStatus = async (repoId) => {
     setLoading(true);
     try {
+      console.log(repoId)
       const res = await api.get(`/ci-status/${repoId}`);
 
-      // ✅ store full response
+      // store full response
       setCiStatus(res.data);
 
     } catch (err) {
-      alert('Failed to fetch CI status');
+      toast.error('Failed to fetch CI status');
       console.error(err);
     } finally {
       setLoading(false);
@@ -34,11 +36,11 @@ const Pipelines = () => {
   const handleSelectRepo = (repo) => {
     setSelectedRepo(repo);
 
-    // ✅ FIX: use githubRepoId
+    //  use githubRepoId
     fetchCIStatus(repo.githubRepoId);
   };
 
-  // 🔥 Extract status safely
+  //  Extract status safely
   const status = ciStatus?.status?.toUpperCase();
 
   return (

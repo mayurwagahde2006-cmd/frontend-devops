@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
+import toast from "react-hot-toast";
+
 
 const Deployments = () => {
   const [importedRepos, setImportedRepos] = useState([]);
@@ -10,7 +12,7 @@ const Deployments = () => {
     runtimeVersion: '17',
     branchName: 'main',
     dockerEnabled: false,
-    cdEnabled: true, // ✅ always true
+    cdEnabled: true, // always true
     deployHookUrl: '',
   });
   const [deploying, setDeploying] = useState(false);
@@ -28,26 +30,26 @@ const Deployments = () => {
 
   const handleDeploy = async () => {
     if (!selectedRepo) {
-      alert('Please select a repository');
+      toast.error('Please select a repository');
       return;
     }
 
     const repoId = selectedRepo.githubRepoId || selectedRepo.id;
 
     if (!repoId) {
-      alert('Repository ID not found!');
+      toast.error('Repository ID not found!');
       return;
     }
 
-    // ✅ ensure deployHookUrl is not empty
+    // ensure deployHookUrl is not empty
     if (!config.deployHookUrl) {
-      alert("Build Hook URL is required");
+      toast.error("Build Hook URL is required");
       return;
     }
 
     const payload = {
       ...config,
-      cdEnabled: true, // ✅ force true always
+      cdEnabled: true, // force true always
     };
 
     console.log("Payload:", payload);
@@ -56,10 +58,10 @@ const Deployments = () => {
     try {
       const res = await api.post(`/deploy/${repoId}`, payload);
       console.log("Deploy response:", res.data);
-      alert('Deployment triggered successfully!');
+      toast.error('Deployment triggered successfully!');
     } catch (err) {
       console.error("Deploy error:", err.response || err.message);
-      alert('Deployment failed. Check console for details.');
+      toast.error('Deployment failed. Check console for details.');
     } finally {
       setDeploying(false);
     }

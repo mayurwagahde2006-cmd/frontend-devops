@@ -19,7 +19,7 @@ const AIPanel = ({ isOpen, onToggle }) => {
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">
             <FaRobot className="text-2xl text-[var(--accent-color)]" />
-            <h3 className="font-semibold text-lg">DevOps Assistant AI</h3>
+            <h3 className="font-semibold text-lg">DevOps Assistant AI-Release Soon</h3>
           </div>
 
           {/* AI Message */}

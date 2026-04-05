@@ -3,6 +3,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 import AIPanel from './AIPanel';
+import toast from "react-hot-toast";
+
 import { 
   FaTachometerAlt, 
   FaTasks, 
@@ -13,7 +15,8 @@ import {
   FaRobot,
   FaDocker,
   FaCloud,
-  FaServer
+  FaServer,
+  FaPhone
 } from "react-icons/fa";
 
 const Layout = () => {
@@ -41,7 +44,7 @@ const Layout = () => {
     { to: '/pipelines', icon: <FaStream />, label: 'CI/CD Pipelines' },
     { to: '/deployments', icon: <FaCloudUploadAlt />, label: 'Deployments' },
     { to: '/monitoring', icon: <FaChartBar />, label: 'Monitoring' },
-  ];
+    { to: '/feedback', icon:<FaPhone/>, label: 'Feedback' },  ];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -99,6 +102,7 @@ const Layout = () => {
                 <button
                   onClick={logout}
                   className="w-full text-left px-4 py-3 text-red-500 hover:bg-[var(--secondary-bg)] transition"
+                 
                 >
                   Logout
                 </button>
@@ -151,7 +155,7 @@ const Layout = () => {
       {/* Footer */}
       <footer className="mt-16 py-8 border-t border-[var(--border-color)] text-center text-[var(--text-secondary)] text-sm">
         <div className="container mx-auto px-4">
-          OPERA &copy; 2023 - Intelligent CI/CD Platform for Developers
+          OPERA &copy; 2026 - Intelligent CI/CD Platform for Developers
         </div>
       </footer>
     </div>

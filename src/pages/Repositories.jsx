@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
-import RepoCard from '../components/RepoCard'; // ✅ FIXED PATH
+import { deleteRepo, deleteAllRepos } from "../services/dashboardService";
+import RepoCard from '../components/Repocard'; 
+import toast from "react-hot-toast";
 
 const Repositories = () => {
   const [activeTab, setActiveTab] = useState('imported');
@@ -11,7 +13,7 @@ const Repositories = () => {
   useEffect(() => {
     if (activeTab === 'imported') {
       api.get('/repos/imported')
-        .then(res => setImportedRepos(res.data || [])) // ✅ safe
+        .then(res => setImportedRepos(res.data || []))
         .catch(err => {
           console.error("Imported fetch error:", err);
         });
@@ -20,7 +22,7 @@ const Repositories = () => {
       api.get('/github/userRepos')
         .then(res => {
           console.log("Available repos:", res.data);
-          setAvailableRepos(res.data || []); // ✅ safe
+          setAvailableRepos(res.data || []); 
         })
         .catch(err => {
           console.error("GitHub repos error:", err);
@@ -33,7 +35,7 @@ const Repositories = () => {
     console.log("CLICKED IMPORT:", repo);
 
     if (!repo || !repo.id) {
-      alert("Invalid repo data");
+      toast.error("Invalid repo data");
       return;
     }
 
@@ -46,14 +48,15 @@ const Repositories = () => {
         name: repo.name || "",
         description: repo.description || "",
 
-        html_url: repo.html_url,                    // ✅ FIXED
-        clone_url: repo.clone_url,                  // ✅ ADDED
-        stargazers_count: String(repo.stargazers_count || 0), // ✅ ADDED
+        html_url: repo.html_url,                   
+        clone_url: repo.clone_url,                  
+        stargazers_count: String(repo.stargazers_count || 0), 
 
-        language: repo.language || "Unknown"       // ⚠️ backend typo
+        language: repo.language || "Unknown"    
       });
 
       console.log("IMPORT SUCCESS");
+      toast.success("Import Successfully")
 
       const [imported, available] = await Promise.all([
         api.get('/repos/imported'),
@@ -62,16 +65,51 @@ const Repositories = () => {
 
       setImportedRepos(imported.data || []);
 
-      // remove imported repo from available list
       setAvailableRepos(
         (available.data || []).filter(r => r.id !== repo.id)
       );
 
     } catch (err) {
       console.error("IMPORT ERROR:", err.response || err.message);
-      alert(err.response?.data?.message || 'Failed to import repository');
+      toast.error(err.response?.data?.message || 'Failed to import repository');
     } finally {
       setLoading(false);
+    }
+  };
+
+  //  DELETE SINGLE
+  const handleDelete = async (repoId) => {
+   const confirmDelete = window.confirm("Are you sure you want to delete this repository?");
+   if (!confirmDelete) return;
+
+   try {
+     await deleteRepo(repoId);
+
+     setImportedRepos(prev => prev.filter(r => r.id !== repoId));
+
+     toast.success("Repository deleted");
+
+    } catch (err) {
+     console.error("Delete failed:", err);
+     toast.error("Delete failed");
+    }
+  };
+
+  //  DELETE ALL
+  const handleDeleteAll = async () => {
+   const confirmDelete = window.confirm("Are you sure you want to delete ALL repositories?");
+   if (!confirmDelete) return;
+
+   try {
+     await deleteAllRepos();
+
+     setImportedRepos([]);
+
+     toast.success("All repositories deleted");
+
+    } catch (err) {
+     console.error("Delete all failed:", err);
+     toast.error("Delete all failed");
     }
   };
 
@@ -81,6 +119,16 @@ const Repositories = () => {
         <h1 className="page-title text-3xl font-bold bg-gradient-to-r from-[var(--accent-color)] to-[var(--accent-color-light)] bg-clip-text text-transparent">
           Repository Management
         </h1>
+
+        {/*  DELETE ALL BUTTON */}
+        {activeTab === 'imported' && (
+          <button
+            onClick={handleDeleteAll}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+          >
+            Delete All
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -120,6 +168,7 @@ const Repositories = () => {
               key={repo.id}
               repo={repo}
               isImported
+              onDelete={handleDelete}   //  PASS DELETE
             />
           ))}
 

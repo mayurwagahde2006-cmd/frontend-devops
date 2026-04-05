@@ -17,14 +17,14 @@ const Monitoring = () => {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Load repos
+  // Load repos
   useEffect(() => {
     api.get("/repos/imported")
       .then(res => setRepos(res.data))
       .catch(err => console.error(err));
   }, []);
 
-  // 🔹 Load monitoring data
+  //  Load monitoring data
   const loadMonitoring = async (repo) => {
   setSelectedRepo(repo);
   setLoading(true);
@@ -32,11 +32,10 @@ const Monitoring = () => {
   try {
     const res = await api.get(`/ci-monitor/${repo.githubRepoId}`);
 
-    // 🔹 Access the workflowRuns array
     const data = [...res.data.workflowRuns].reverse();
     setRuns(data);
 
-    // 🔥 GRAPH DATA PROCESSING
+    //  GRAPH DATA PROCESSING
     const grouped = {};
     data.forEach(run => {
       if (!run.date) return;
@@ -58,7 +57,7 @@ const Monitoring = () => {
   }
 };
 
-  // 🔥 CALCULATIONS
+  //  CALCULATIONS
   const totalRuns = runs.length;
   const success = runs.filter(r => r.status === "SUCCESS").length;
   const failed = runs.filter(r => r.status === "FAILED").length;
@@ -67,7 +66,7 @@ const Monitoring = () => {
     ? ((success / totalRuns) * 100).toFixed(1)
     : 0;
 
-  // 🔥 HEALTH STATUS
+  //  HEALTH STATUS
   let health = "Healthy";
   let healthColor = "text-green-500";
 
@@ -104,7 +103,7 @@ const Monitoring = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        {/* 🔹 LEFT: PROJECT LIST */}
+        {/*  LEFT: PROJECT LIST */}
         <div className="bg-[var(--card-bg)] p-5 rounded-xl shadow-custom">
           <h2 className="font-semibold mb-4">Projects</h2>
 
@@ -123,7 +122,7 @@ const Monitoring = () => {
           ))}
         </div>
 
-        {/* 🔹 RIGHT: DASHBOARD */}
+        {/*  RIGHT: DASHBOARD */}
         <div className="md:col-span-2 space-y-6">
 
           {!selectedRepo ? (
@@ -161,7 +160,7 @@ const Monitoring = () => {
 
               </div>
 
-              {/* 🔥 HEALTH + LAST BUILD */}
+              {/*  HEALTH + LAST BUILD */}
               <div className="bg-[var(--card-bg)] p-5 rounded-xl flex justify-between items-center">
                 <div>
                   <p className="text-sm text-[var(--text-secondary)]">Health</p>
@@ -182,14 +181,14 @@ const Monitoring = () => {
                 </div>
               </div>
 
-              {/* 🔥 ALERT */}
+              {/*  ALERT */}
               {showAlert && (
                 <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-xl">
                   ⚠ Warning: Last 3 builds failed
                 </div>
               )}
 
-              {/* 🔥 GRAPH */}
+              {/*  GRAPH */}
               <div className="bg-[var(--card-bg)] p-5 rounded-xl">
                 <h3 className="font-semibold mb-4">Build Trend</h3>
 
@@ -205,7 +204,7 @@ const Monitoring = () => {
                 </ResponsiveContainer>
               </div>
 
-              {/* 🔥 BRANCH STATS */}
+              {/*  BRANCH STATS */}
               <div className="bg-[var(--card-bg)] p-5 rounded-xl">
                 <h3 className="font-semibold mb-3">Branch Stats</h3>
 
@@ -218,7 +217,7 @@ const Monitoring = () => {
                 ))}
               </div>
 
-              {/* 🔥 RECENT RUNS */}
+              {/*  RECENT RUNS */}
               <div className="bg-[var(--card-bg)] p-5 rounded-xl">
                 <h3 className="font-semibold mb-3">Recent Runs</h3>
 

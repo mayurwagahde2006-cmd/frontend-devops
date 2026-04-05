@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Gantt from "frappe-gantt";
 import "frappe-gantt/dist/frappe-gantt.css";
+import toast from "react-hot-toast";
+
 
 import {
   getProjects,
@@ -26,7 +28,7 @@ const Planning = () => {
 
   const [loading, setLoading] = useState(false);
 
-  // 🔹 LOAD PROJECTS
+  // LOAD PROJECTS
   const refresh = async () => {
     try {
       const res = await getProjects();
@@ -47,14 +49,14 @@ const Planning = () => {
 
   //  GANTT
   useEffect(() => {
-    if (!selectedProject?.tasks?.length) return;
+    if (!selectedProject) return;
 
     const container = document.getElementById("gantt");
     if (!container) return;
 
     container.innerHTML = "";
 
-    const tasks = selectedProject.tasks.map((t) => ({
+    const tasks = (selectedProject.tasks || []).map((t) => ({
       id: t.id,
       name: t.title,
       start: t.startDate,
@@ -62,14 +64,17 @@ const Planning = () => {
       progress: t.status === "Done" ? 100 : 40,
     }));
 
-    new Gantt("#gantt", tasks);
+    if (tasks.length > 0) {
+      new Gantt("#gantt", tasks);
+    }
+
   }, [selectedProject]);
 
   //  CREATE PROJECT (FIXED)
   const handleCreateProject = async () => {
     try {
       if (!projectName.trim()) {
-        alert("Enter project name");
+        toast.error("Enter project name");
         return;
       }
 
@@ -79,7 +84,7 @@ const Planning = () => {
       await refresh();
     } catch (err) {
       console.error("Create error:", err);
-      alert("Create failed");
+      toast.error("Create failed");
     }
   };
 
@@ -97,45 +102,100 @@ const Planning = () => {
     }
   };
 
-  //  ADD MEMBER
-  let isSubmitting = false;
+const [isSubmitting, setIsSubmitting] = useState(false);
 
 const handleAddMember = async () => {
-  if (isSubmitting) return;  
-  isSubmitting = true;
+  console.log("handleAddMember called!!");
+
+  const name = member.name.trim();
+  const role = member.role.trim();
+
+  //  VALIDATION
+  if (!name || !role) {
+    toast.error("Please enter member name and role");
+    return; // NOTHING should reset here
+  }
+
+  if (isSubmitting) return;
+  setIsSubmitting(true);
+  toast.success("Add Member");
 
   try {
     await addMemberAPI({
-      ...member,
+      name,
+      role,
       projectId: selectedProject.id,
     });
 
+    //  ONLY reset AFTER SUCCESS
     setMember({ name: "", role: "" });
-    await refresh();
+
+    const res = await getProjects();
+    setProjects(res.data);
+
+    // 🔥 update selected project with fresh data
+    const updated = res.data.find(p => p.id === selectedProject.id);
+    setSelectedProject(updated);
 
   } catch (err) {
     console.error(err);
+    toast.error("Failed to add member");
   } finally {
-    isSubmitting = false;
+    setIsSubmitting(false);
   }
 };
 
-  //  ADD TASK
-  const handleAddTask = async () => {
-    try {
-      if (!selectedProject) return;
+const handleAddTask = async () => {
+  if (!selectedProject) return;
 
-      await addTaskAPI({
-        ...task,
-        projectId: selectedProject.id,
-      });
+  //  VALIDATION FIRST
+  if (!task.title.trim()) {
+    toast.error("Enter task title");
+    return;
+  }
 
-      setTask({ title: "", startDate: "", endDate: "", memberId: "" });
-      await refresh();
-    } catch (err) {
-      console.error("Task error:", err);
-    }
-  };
+  if (!task.startDate || !task.endDate) {
+    toast.error("Select start and end date");
+    return;
+  }
+
+  if (!task.memberId) {
+    toast.error("Select a member");
+    return;
+  }
+
+  try {
+    await addTaskAPI({
+      title: task.title.trim(),
+      startDate: task.startDate,
+      endDate: task.endDate,
+      memberId: Number(task.memberId),
+      projectId: selectedProject.id,
+    });
+
+    // SUCCESS MESSAGE
+    toast.success("Task added successfully");
+    console.log("add");
+
+    //  RESET INPUTS AFTER SUCCESS
+    setTask({
+      title: "",
+      startDate: "",
+      endDate: "",
+      memberId: "",
+    });
+
+    const res = await getProjects();
+    setProjects(res.data);
+
+    const updated = res.data.find(p => p.id === selectedProject.id);
+    setSelectedProject(updated);
+
+  } catch (err) {
+    console.error("Task error:", err);
+    toast.error("Failed to add task");
+  }
+};
 
   //  STATS
   const totalTasks = selectedProject?.tasks?.length || 0;
