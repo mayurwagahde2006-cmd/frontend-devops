@@ -36,42 +36,47 @@ const Dashboard = () => {
 
   // 🔥 DELETE SINGLE
   const handleDelete = async (repoId) => {
-    if (!window.confirm("Delete this repository?")) return;
+  if (!window.confirm("Delete this repository?")) return;
 
-    try {
-      await deleteRepo(repoId);
+  try {
+    await deleteRepo(repoId);
 
-      setRecentRepos(prev => prev.filter(r => r.id !== repoId));
+    
+    setRecentRepos(prev =>
+      prev.filter(r => r.githubRepoId !== repoId)
+    );
 
-      setStats(prev => ({
-        ...prev,
-        repos: Math.max(0, prev.repos - 1)
-      }));
+    setStats(prev => ({
+      ...prev,
+      repos: Math.max(0, prev.repos - 1)
+    }));
 
-    } catch (err) {
-      console.error("Delete failed:", err);
-    }
-  };
+  } catch (err) {
+    console.error("Delete failed:", err);
+  }
+};
 
   // 🔥 DELETE ALL
-  const handleDeleteAll = async () => {
-    if (!window.confirm("Delete ALL repositories?")) return;
+ const handleDeleteAll = async () => {
+  if (!window.confirm("Delete ALL repositories?")) return;
 
-    try {
-      await deleteAllRepos();
+  try {
+    await deleteAllRepos();
+    setRecentRepos([]);
 
-      setRecentRepos([]);
+   
+    setStats(prev => ({
+      ...prev,
+      repos: 0,
+      pipelines: 0   // optional but cleaner
+    }));
 
-      setStats(prev => ({
-        ...prev,
-        repos: 0
-      }));
+    console.log("All repos deleted");
 
-    } catch (err) {
-      console.error("Delete all failed:", err);
-    }
-  };
-
+  } catch (err) {
+    console.error("Delete all failed:", err);
+  }
+};
   return (
     <>
       <div className="page-header flex justify-between items-center mb-8">

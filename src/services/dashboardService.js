@@ -15,7 +15,7 @@ export const getCiStatus = (repoId) =>
 
 
 export const deleteRepo = (repoId) =>
-  axios.delete(`/repos/${repoId}`);
+  api.delete(`/repos/${repoId}`);
 
 export const deleteAllRepos = () =>
-  axios.delete(`/repos/deleteAll`);
+  api.delete("/repos/deleteAll");

@@ -78,23 +78,25 @@ const Repositories = () => {
   };
 
   //  DELETE SINGLE
-  const handleDelete = async (repoId) => {
-   const confirmDelete = window.confirm("Are you sure you want to delete this repository?");
-   if (!confirmDelete) return;
+ const handleDelete = async (repoId) => {
+  const confirmDelete = window.confirm("Are you sure you want to delete this repository?");
+  if (!confirmDelete) return;
 
-   try {
-     await deleteRepo(repoId);
+  try {
+    await deleteRepo(repoId);
 
-     setImportedRepos(prev => prev.filter(r => r.id !== repoId));
+   
+    setImportedRepos(prev =>
+      prev.filter(r => r.githubRepoId !== repoId)
+    );
 
-     toast.success("Repository deleted");
+    toast.success("Repository deleted");
 
-    } catch (err) {
-     console.error("Delete failed:", err);
-     toast.error("Delete failed");
-    }
-  };
-
+  } catch (err) {
+    console.error("Delete failed:", err);
+    toast.error("Delete failed");
+  }
+};
   //  DELETE ALL
   const handleDeleteAll = async () => {
    const confirmDelete = window.confirm("Are you sure you want to delete ALL repositories?");

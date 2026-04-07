@@ -30,11 +30,16 @@ const Planning = () => {
 
   // LOAD PROJECTS
   const refresh = async () => {
+    setLoading(true);
     try {
       const res = await getProjects();
       setProjects(res.data);
+      console.log("Projects loaded:", res.data);
     } catch (err) {
       console.error("Fetch error:", err);
+      toast.error("Failed to load projects");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,10 +49,11 @@ const Planning = () => {
 
   // SELECT PROJECT
   const loadProject = (project) => {
+    console.log("Selected project:", project);
     setSelectedProject(project);
   };
 
-  // GANTT
+  // GANTT CHART
   useEffect(() => {
     if (!selectedProject) return;
 
@@ -65,83 +71,80 @@ const Planning = () => {
     }));
 
     if (tasks.length > 0) {
-      new Gantt("#gantt", tasks);
+      const gantt = new Gantt("#gantt", tasks);
+      return () => {
+        // Optional: cleanup if needed
+        container.innerHTML = "";
+      };
     }
   }, [selectedProject]);
 
   // CREATE PROJECT
   const handleCreateProject = async () => {
+    if (!projectName.trim()) {
+      toast.error("Enter project name");
+      return;
+    }
+
     try {
-      if (!projectName.trim()) {
-        toast.error("Enter project name");
-        return;
-      }
-
       await createProjectAPI({ name: projectName });
-
       setProjectName("");
       await refresh();
+      toast.success("Project created");
     } catch (err) {
       console.error("Create error:", err);
-      toast.error("Create failed");
+      toast.error("Failed to create project");
     }
   };
 
   // DELETE PROJECT
   const deleteProject = async (id) => {
+    if (!window.confirm("Delete project?")) return;
+
     try {
-      if (!window.confirm("Delete project?")) return;
-
       await planningApi.delete(`/api/planning/project/${id}`);
-
       setSelectedProject(null);
       await refresh();
+      toast.success("Project deleted");
     } catch (err) {
       console.error("Delete error:", err);
+      toast.error("Failed to delete project");
     }
   };
 
-  // ✅ ADD MEMBER (FIXED)
+  // ADD MEMBER
   const handleAddMember = async () => {
-    console.log("handleAddMember called!!");
-
     const name = member.name.trim();
     const role = member.role.trim();
 
     if (!name || !role) {
-      toast.error("Please enter member name and role");
+      toast.error("Enter member name and role");
       return;
     }
 
     if (isSubmitting) return;
     setIsSubmitting(true);
-    toast.success("Add Member");
 
     try {
-      // ✅ FIXED HERE
-      await addMemberAPI(selectedProject.id, {
-        name,
-        role,
-      });
-
+      await addMemberAPI(selectedProject.id, { name, role });
       setMember({ name: "", role: "" });
 
       const res = await getProjects();
       setProjects(res.data);
 
-      const updated = res.data.find(p => p.id === selectedProject.id);
-      console.log("Updated project after adding member:", updated);
+      const updated = res.data.find((p) => p.id === selectedProject.id);
       setSelectedProject(updated);
 
+      toast.success("Member added");
     } catch (err) {
-      console.error(err);
+      console.error("Add member error:", err);
       toast.error("Failed to add member");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ✅ ADD TASK (FIXED)
+  // ADD TASK
   const handleAddTask = async () => {
     if (!selectedProject) return;
 
@@ -161,7 +164,6 @@ const Planning = () => {
     }
 
     try {
-      // ✅ FIXED HERE
       await addTaskAPI(selectedProject.id, {
         title: task.title.trim(),
         startDate: task.startDate,
@@ -181,11 +183,10 @@ const Planning = () => {
       const res = await getProjects();
       setProjects(res.data);
 
-      const updated = res.data.find(p => p.id === selectedProject.id);
+      const updated = res.data.find((p) => p.id === selectedProject.id);
       setSelectedProject(updated);
-
     } catch (err) {
-      console.error("Task error:", err);
+      console.error("Add task error:", err);
       toast.error("Failed to add task");
     }
   };
@@ -195,20 +196,15 @@ const Planning = () => {
   const totalMembers = selectedProject?.members?.length || 0;
   const completed =
     selectedProject?.tasks?.filter((t) => t.status === "Done").length || 0;
-
-  const progress = totalTasks
-    ? Math.round((completed / totalTasks) * 100)
-    : 0;
+  const progress = totalTasks ? Math.round((completed / totalTasks) * 100) : 0;
 
   return (
     <>
       <h1 className="text-3xl font-bold mb-6">Planning</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
         {/* LEFT PANEL */}
         <div className="bg-[var(--card-bg)] p-5 rounded-xl shadow-custom">
-
           <h2 className="font-semibold mb-4">Projects</h2>
 
           <div className="flex gap-2 mb-4">
@@ -227,32 +223,35 @@ const Planning = () => {
             </button>
           </div>
 
-          {projects.map((p) => (
-            <div key={p.id} className="flex items-center justify-between mb-2">
-              <button
-                onClick={() => loadProject(p)}
-                className={`flex-1 text-left px-3 py-2 rounded transition ${
-                  selectedProject?.id === p.id
-                    ? "bg-[var(--accent-color)] text-white"
-                    : "hover:bg-[var(--secondary-bg)]"
-                }`}
-              >
-                {p.name}
-              </button>
+          {loading ? (
+            <div className="text-center p-2">Loading projects...</div>
+          ) : (
+            projects.map((p) => (
+              <div key={p.id} className="flex items-center justify-between mb-2">
+                <button
+                  onClick={() => loadProject(p)}
+                  className={`flex-1 text-left px-3 py-2 rounded transition ${
+                    selectedProject?.id === p.id
+                      ? "bg-[var(--accent-color)] text-white"
+                      : "hover:bg-[var(--secondary-bg)]"
+                  }`}
+                >
+                  {p.name}
+                </button>
 
-              <button
-                className="ml-2 text-red-400 hover:text-red-600"
-                onClick={() => deleteProject(p.id)}
-              >
-                ✕
-              </button>
-            </div>
-          ))}
+                <button
+                  className="ml-2 text-red-400 hover:text-red-600"
+                  onClick={() => deleteProject(p.id)}
+                >
+                  ✕
+                </button>
+              </div>
+            ))
+          )}
         </div>
 
         {/* RIGHT PANEL */}
         <div className="md:col-span-2 space-y-6">
-
           {!selectedProject ? (
             <div className="bg-[var(--card-bg)] p-6 rounded-xl text-center">
               Select a project to manage planning
@@ -261,7 +260,6 @@ const Planning = () => {
             <>
               {/* STATS */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-
                 <div className="bg-[var(--card-bg)] p-4 rounded-xl">
                   <p className="text-sm text-[var(--text-secondary)]">Tasks</p>
                   <p className="text-2xl font-bold">{totalTasks}</p>
@@ -281,7 +279,6 @@ const Planning = () => {
                   <p className="text-sm text-[var(--text-secondary)]">Progress</p>
                   <p className="text-2xl font-bold">{progress}%</p>
                 </div>
-
               </div>
 
               {/* DELETE BUTTON */}
@@ -297,21 +294,18 @@ const Planning = () => {
               {/* ADD MEMBER */}
               <div className="bg-[var(--card-bg)] p-5 rounded-xl">
                 <h3 className="font-semibold mb-3">Add Member</h3>
-
                 <div className="flex gap-2">
                   <input
                     placeholder="Name"
                     className="p-2 bg-[var(--secondary-bg)] rounded"
-                    onChange={(e) =>
-                      setMember({ ...member, name: e.target.value })
-                    }
+                    value={member.name}
+                    onChange={(e) => setMember({ ...member, name: e.target.value })}
                   />
                   <input
                     placeholder="Role"
                     className="p-2 bg-[var(--secondary-bg)] rounded"
-                    onChange={(e) =>
-                      setMember({ ...member, role: e.target.value })
-                    }
+                    value={member.role}
+                    onChange={(e) => setMember({ ...member, role: e.target.value })}
                   />
                   <button
                     onClick={handleAddMember}
@@ -325,44 +319,37 @@ const Planning = () => {
               {/* ADD TASK */}
               <div className="bg-[var(--card-bg)] p-5 rounded-xl">
                 <h3 className="font-semibold mb-3">Add Task</h3>
-
                 <div className="flex gap-2 flex-wrap">
                   <input
                     placeholder="Title"
                     className="p-2 bg-[var(--secondary-bg)] rounded"
-                    onChange={(e) =>
-                      setTask({ ...task, title: e.target.value })
-                    }
+                    value={task.title}
+                    onChange={(e) => setTask({ ...task, title: e.target.value })}
                   />
                   <input
                     type="date"
                     className="p-2 bg-[var(--secondary-bg)] rounded"
-                    onChange={(e) =>
-                      setTask({ ...task, startDate: e.target.value })
-                    }
+                    value={task.startDate}
+                    onChange={(e) => setTask({ ...task, startDate: e.target.value })}
                   />
                   <input
                     type="date"
                     className="p-2 bg-[var(--secondary-bg)] rounded"
-                    onChange={(e) =>
-                      setTask({ ...task, endDate: e.target.value })
-                    }
+                    value={task.endDate}
+                    onChange={(e) => setTask({ ...task, endDate: e.target.value })}
                   />
-
                   <select
                     className="p-2 bg-[var(--secondary-bg)] rounded"
-                    onChange={(e) =>
-                      setTask({ ...task, memberId: Number(e.target.value) })
-                    }
+                    value={task.memberId}
+                    onChange={(e) => setTask({ ...task, memberId: Number(e.target.value) })}
                   >
-                    <option>Select Member</option>
+                    <option value="">Select Member</option>
                     {selectedProject.members?.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.name}
                       </option>
                     ))}
                   </select>
-
                   <button
                     onClick={handleAddTask}
                     className="bg-purple-500 px-3 rounded text-white"
@@ -381,7 +368,6 @@ const Planning = () => {
               {/* MEMBERS */}
               <div className="bg-[var(--card-bg)] p-5 rounded-xl">
                 <h3 className="font-semibold mb-3">Members</h3>
-
                 {selectedProject.members?.map((m) => (
                   <div key={m.id} className="flex justify-between py-2 border-b">
                     <span>{m.name}</span>
@@ -393,7 +379,6 @@ const Planning = () => {
               {/* TASKS */}
               <div className="bg-[var(--card-bg)] p-5 rounded-xl">
                 <h3 className="font-semibold mb-3">Tasks</h3>
-
                 {selectedProject.tasks?.map((t) => (
                   <div key={t.id} className="flex justify-between py-2 border-b">
                     <span>{t.title}</span>
@@ -401,7 +386,6 @@ const Planning = () => {
                   </div>
                 ))}
               </div>
-
             </>
           )}
         </div>

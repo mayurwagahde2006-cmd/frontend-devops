@@ -1,36 +1,78 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import api from '../api';
 
 const RepoCard = ({ repo, isImported, onImport, onDelete }) => {
   const navigate = useNavigate();
 
-  const statusClass = repo.status === 'success' ? 'status-success' : repo.status === 'failed' ? 'status-failed' : 'status-pending';
-  const statusText = repo.status === 'success' ? 'Deployed' : repo.status === 'failed' ? 'Failed' : 'Pending';
+  const [ciStatus, setCiStatus] = useState(null);
+
+  // ✅ Fetch CI status when repo loads
+  useEffect(() => {
+    const fetchCI = async () => {
+      try {
+        if (!repo?.githubRepoId) return;
+
+        const res = await api.get(`/ci-status/${repo.githubRepoId}`);
+        setCiStatus(res.data);
+      } catch (err) {
+        console.error("CI fetch failed:", err);
+      }
+    };
+
+    fetchCI();
+  }, [repo?.githubRepoId]);
+
+  // ✅ Normalize status (IMPORTANT FIX)
+  const status = ciStatus?.status?.toUpperCase();
+
+
+  const statusClass =
+    status === 'SUCCESS'
+      ? 'status-success'
+      : status === 'FAILED' || status === 'FAILURE'
+      ? 'status-failed'
+      : 'status-pending';
+
+  const statusText =
+    status === 'SUCCESS'
+      ? 'Deployed'
+      : status === 'FAILED' || status === 'FAILURE'
+      ? 'Failed'
+      : 'Pending';
 
   return (
     <div className="bg-[var(--card-bg)] rounded-xl p-5 border border-[var(--border-color)] hover:-translate-y-1 transition-all shadow-custom">
       <div className="flex justify-between items-start mb-3">
         <div>
           <h3 className="font-semibold text-lg">{repo.name || repo.repoName}</h3>
-          <div className="text-xs text-[var(--text-secondary)]">{repo.type || repo.language || 'Unknown'}</div>
+          <div className="text-xs text-[var(--text-secondary)]">
+            {repo.type || repo.language || 'Unknown'}
+          </div>
         </div>
+
+        {/* ✅ SAME UI, ONLY DATA FIXED */}
         <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs ${statusClass}`}>
           <span className={`w-2 h-2 rounded-full bg-current`}></span>
           <span>{statusText}</span>
         </div>
       </div>
+
       <p className="text-sm text-[var(--text-secondary)] mb-4 line-clamp-2">
         {repo.description || 'No description'}
       </p>
+
       <div className="flex justify-between items-center">
         <span className="text-xs text-[var(--text-secondary)]">
           <i className="far fa-clock mr-1"></i> Last deploy: {repo.lastDeploy || 'N/A'}
         </span>
+
         {isImported ? (
-         <button
-           onClick={() => onDelete(repo.id)}
-           className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+          <button
+            onClick={() => onDelete(repo.githubRepoId)}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
           >
-          <i className="fas fa-trash mr-1"></i> Delete
+            <i className="fas fa-trash mr-1"></i> Delete
           </button>
         ) : (
           <button
