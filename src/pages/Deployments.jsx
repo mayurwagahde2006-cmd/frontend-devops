@@ -34,8 +34,7 @@ const Deployments = () => {
       return;
     }
 
-    const repoId = selectedRepo.githubRepoId || selectedRepo.id;
-
+    const repoId = String(selectedRepo.githubRepoId);
     if (!repoId) {
       toast.error('Repository ID not found!');
       return;
@@ -58,7 +57,7 @@ const Deployments = () => {
     try {
       const res = await api.post(`/deploy/${repoId}`, payload);
       console.log("Deploy response:", res.data);
-      toast.error('Deployment triggered successfully!');
+      toast.success('Deployment triggered successfully!');
     } catch (err) {
       console.error("Deploy error:", err.response || err.message);
       toast.error('Deployment failed. Check console for details.');
